@@ -13,10 +13,12 @@ async function loadPdfJs(): Promise<any> {
     if (loadPromise) return loadPromise;
 
     isLoading = true;
-    // @ts-expect-error - pdfjs-dist/build/pdf.mjs is not a module
-    loadPromise = import("pdfjs-dist/build/pdf.mjs").then((lib) => {
-        // Set the worker source to use local file
-        lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    
+    // We use a dynamic import to get the library version automatically
+    loadPromise = import("pdfjs-dist").then((lib) => {
+        // USE JSDELIVR INSTEAD OF CLOUDFLARE
+        lib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${lib.version}/build/pdf.worker.min.mjs`;
+        
         pdfjsLib = lib;
         isLoading = false;
         return lib;
