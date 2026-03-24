@@ -60,7 +60,18 @@ const Upload = () => {
             ? feedback.message.content
             : feedback.message.content[0].text;
 
-        data.feedback = JSON.parse(feedbackText);
+        const cleanJsonText = feedbackText
+            .replace(/```json/g, "") // Remove starting block
+            .replace(/```/g, "")     // Remove ending block
+            .trim();                 // Remove extra spaces/newlines
+
+        try {
+            data.feedback = JSON.parse(cleanJsonText);
+        } catch (e) {
+            console.error("Failed to parse AI response. Raw text was:", feedbackText);
+            setStatusText("Error: AI response was formatted incorrectly. Retrying...");
+            return;
+        }
         await kv.set(`resume:${uuid}`, JSON.stringify(data));
         setStatusText('Analysis complete, redirecting...');
         console.log(data);

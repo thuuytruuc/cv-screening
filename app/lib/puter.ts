@@ -327,12 +327,10 @@ export const usePuterStore = create<PuterStore>((set, get) => {
         >;
     };
 
+    // usePuterStore.ts
     const feedback = async (path: string, message: string) => {
         const puter = getPuter();
-        if (!puter) {
-            setError("Puter.js not available");
-            return;
-        }
+        if (!puter) return;
 
         return puter.ai.chat(
             [
@@ -350,7 +348,8 @@ export const usePuterStore = create<PuterStore>((set, get) => {
                     ],
                 },
             ],
-            { model: "claude-3-7-sonnet" }
+            // Use a model with strong native file support in Puter
+            { model: "gpt-4o" } 
         ) as Promise<AIResponse | undefined>;
     };
 

@@ -226,16 +226,22 @@ export const AIResponseFormat = `
     }`;
 
 export const prepareInstructions = ({jobTitle, jobDescription}: { jobTitle: string; jobDescription: string; }) =>
-    `You are an expert in ATS (Applicant Tracking System) and resume analysis.
-      Please analyze and rate this resume and suggest how to improve it.
-      The rating can be low if the resume is bad.
-      Be thorough and detailed. Don't be afraid to point out any mistakes or areas for improvement.
-      If there is a lot to improve, don't hesitate to give low scores. This is to help the user to improve their resume.
-      If available, use the job description for the job user is applying to to give more detailed feedback.
-      If provided, take the job description into consideration.
-      The job title is: ${jobTitle}
-      The job description is: ${jobDescription}
-      Provide the feedback using the following format:
-      ${AIResponseFormat}
-      Return the analysis as an JSON object, without any other text and without the backticks.
-      Do not include any other text or comments.`;
+    `ROLE: Senior Technical Recruiter.
+    CONTEXT: HR Candidate Screening for "${jobTitle}".
+    JD: ${jobDescription}
+
+    TASK: Perform a critical gap analysis of the candidate's resume against the JD. 
+    1. Assess technical alignment (Hard Skills).
+    2. Evaluate quantifiable impact (Metrics/Results).
+    3. Identify "Red Flags" or missing mandatory experience.
+
+    SCORING LOGIC:
+    - 85+: Top Tier (Shortlist immediately).
+    - 70-84: Strong Match (Interview recommended).
+    - 50-69: Marginal Match (Review required).
+    - <50: Unsuitable (Reject).
+
+    OUTPUT: Provide results strictly in JSON format as specified:
+    ${AIResponseFormat}
+    
+    STRICT RULE: Do not include introductory text. Return only the JSON object.`;
