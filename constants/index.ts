@@ -225,23 +225,35 @@ export const AIResponseFormat = `
       };
     }`;
 
-export const prepareInstructions = ({jobTitle, jobDescription}: { jobTitle: string; jobDescription: string; }) =>
-    `ROLE: Senior Technical Recruiter.
-    CONTEXT: HR Candidate Screening for "${jobTitle}".
-    JD: ${jobDescription}
-
-    TASK: Perform a critical gap analysis of the candidate's resume against the JD. 
-    1. Assess technical alignment (Hard Skills).
-    2. Evaluate quantifiable impact (Metrics/Results).
-    3. Identify "Red Flags" or missing mandatory experience.
-
-    SCORING LOGIC:
-    - 85+: Top Tier (Shortlist immediately).
-    - 70-84: Strong Match (Interview recommended).
-    - 50-69: Marginal Match (Review required).
-    - <50: Unsuitable (Reject).
-
-    OUTPUT: Provide results strictly in JSON format as specified:
-    ${AIResponseFormat}
+// Update this in your constants.ts file
+export const prepareInstructions = ({ jobTitle, jobDescription, cvText }: { jobTitle: string; jobDescription: string; cvText: string; }) =>
+    `ACT AS: Senior Recruitment Analyst for HR Operations.
+    TASK: Evaluate the attached Candidate CV against the Job Description (JD) for the role: ${jobTitle}.
     
-    STRICT RULE: Do not include introductory text. Return only the JSON object.`;
+    JD CONTEXT: ${jobDescription}
+
+    CANDIDATE CV TEXT (Extracted via OCR):
+    """
+    ${cvText}
+    """
+
+    REQUIRED ANALYSIS:
+    1. Technical Alignment: Does the candidate have the mandatory stack?
+    2. Impact Scoring: Look for quantifiable achievements.
+    3. Risk Assessment: Identify any gaps in experience or skills.
+
+    STRICT OUTPUT FORMAT: 
+    Return ONLY a raw JSON object exactly matching this structure. Do NOT wrap it in a "Feedback" key. Do NOT use markdown backticks.
+    {
+      "overallScore": 85,
+      "ATS": {
+        "score": 90,
+        "tips": [
+          { "type": "good", "tip": "Short title", "explanation": "Detail here" }
+        ]
+      },
+      "toneAndStyle": { "score": 80, "tips": [] },
+      "content": { "score": 75, "tips": [] },
+      "structure": { "score": 90, "tips": [] },
+      "skills": { "score": 60, "tips": [] }
+    }`;
