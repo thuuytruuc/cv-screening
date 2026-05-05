@@ -7,6 +7,8 @@ import { convertPdfToImage } from "~/lib/pdf2img";
 import { generateUUID } from "~/lib/utils";
 import { prepareInstructions } from "../../constants";
 
+type SkillEntry = { skill: string; weight: number };
+
 const Upload = () => {
     const { fs, ai, kv } = usePuterStore();
     const navigate = useNavigate();
@@ -16,6 +18,26 @@ const Upload = () => {
     // 1. Update state to handle an array of files
     const [files, setFiles] = useState<File[]>([]);
     const [progress, setProgress] = useState({ current: 0, total: 0 });
+
+    // Skill + weight list state
+    const [skills, setSkills] = useState<SkillEntry[]>([
+        { skill: '', weight: 5 },
+    ]);
+
+    const addSkill = () => setSkills(prev => [...prev, { skill: '', weight: 5 }]);
+
+    const removeSkill = (index: number) =>
+        setSkills(prev => prev.filter((_, i) => i !== index));
+
+    const updateSkill = (index: number, field: keyof SkillEntry, value: string | number) =>
+        setSkills(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+
+    const buildJobDescription = () => {
+        const filled = skills.filter(s => s.skill.trim());
+        if (filled.length === 0) return '';
+        const lines = filled.map(s => `- ${s.skill.trim()} (weight: ${s.weight}/10)`);
+        return `Key required skills (weighted by importance):\n${lines.join('\n')}`;
+    };
 
     // 2. Expect an array of files from the uploader
     const handleFileSelect = (selectedFiles: File[]) => {
@@ -115,10 +137,11 @@ const Upload = () => {
         const formData = new FormData(form);
 
         const jobTitle = formData.get('job-title') as string;
-        const jobDescription = formData.get('job-description') as string;
+        const jobDescription = buildJobDescription();
         const targetCount = parseInt(formData.get('passed-candidates') as string, 10);
 
         if (files.length === 0) return alert("Please upload at least one CV.");
+        if (!jobDescription) return alert("Please add at least one skill.");
 
         handleAnalyzeBatch({ jobTitle, jobDescription, targetCount, filesToProcess: files });
     }
@@ -152,8 +175,66 @@ const Upload = () => {
                             </div>
                             
                             <div className="form-div">
-                                <label htmlFor="job-description" className="font-semibold">Job Description</label>
-                                <textarea rows={5} name="job-description" placeholder="Paste the requirements and responsibilities here..." id="job-description" required className="border p-2 rounded" />
+                                <label className="font-semibold">Required Skills &amp; Weights</label>
+                                <p className="text-sm text-gray-500 -mt-1">
+                                    List each skill the role needs and rate its importance from 1 (nice-to-have) to 10 (must-have).
+                                </p>
+
+                                <div className="flex flex-col gap-3 w-full">
+                                    {skills.map((entry, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 w-full animate-[fadeIn_0.2s_ease]">
+                                            {/* Skill input */}
+                                            <input
+                                                type="text"
+                                                value={entry.skill}
+                                                onChange={e => updateSkill(idx, 'skill', e.target.value)}
+                                                placeholder={`Skill #${idx + 1}  e.g. React, Python…`}
+                                                className="flex-1 min-w-0"
+                                            />
+
+                                            {/* Weight badge + slider */}
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className="text-xs font-semibold text-indigo-600 w-6 text-center">
+                                                    {entry.weight}
+                                                </span>
+                                                <input
+                                                    type="range"
+                                                    min={1}
+                                                    max={10}
+                                                    value={entry.weight}
+                                                    onChange={e => updateSkill(idx, 'weight', parseInt(e.target.value))}
+                                                    className="w-24 accent-indigo-500 cursor-pointer"
+                                                    style={{ boxShadow: 'none', padding: 0, backdropFilter: 'none' }}
+                                                    title={`Weight: ${entry.weight}/10`}
+                                                />
+                                            </div>
+
+                                            {/* Remove button (hidden when only 1 row) */}
+                                            {skills.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeSkill(idx)}
+                                                    className="shrink-0 text-gray-400 hover:text-red-500 transition-colors text-lg leading-none"
+                                                    title="Remove skill"
+                                                >
+                                                    ✕
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Add skill button */}
+                                <button
+                                    type="button"
+                                    onClick={addSkill}
+                                    className="mt-1 flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                                >
+                                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 hover:bg-indigo-200 text-lg font-bold leading-none transition-colors">
+                                        +
+                                    </span>
+                                    Add skill
+                                </button>
                             </div>
 
                             <div className="form-div">
